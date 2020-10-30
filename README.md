@@ -18,8 +18,11 @@ config:
   - "to report on"
 ```
 
+Run:
+```
 $ bundle install
 $ bundle exec rake run
+```
 
 tab back to terminal to see the output
 
