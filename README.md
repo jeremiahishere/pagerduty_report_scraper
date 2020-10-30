@@ -1,7 +1,9 @@
 buy a macbook pro
+
 on your default browser, 
 - set your download location to ~/Downloads
 - sign in to pagerduty
+
 make sure there you don't have an important file saved in ~/Downloads/incidents.csv.  It will be
 deleted.
 
@@ -20,4 +22,5 @@ $ bundle install
 $ bundle exec rake run
 
 tab back to terminal to see the output
+
 the output will also be saved into incidents/formatted
