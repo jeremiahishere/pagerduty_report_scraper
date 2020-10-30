@@ -1,4 +1,4 @@
-buy a macbook pro
+buy a macbook pro running osx
 
 on your default browser, 
 - set your download location to ~/Downloads
