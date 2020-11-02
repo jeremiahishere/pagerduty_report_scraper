@@ -67,11 +67,12 @@ class IncidentReader
 
   # you are required to be logged in to pagerduty on your default browser before running this step
   def download_incident_list(file_name)
-    raw_file_name = "~/Downloads/incidents.csv"
-    `rm #{file_name}` if File.exists?(file_name)
-    `rm #{raw_file_name}` if File.exists?(raw_file_name)
+    FileUtils.rm(file_name) if File.exists?(file_name)
+
+    raw_file_name = File.expand_path("~/Downloads/incidents.csv")
+    FileUtils.rm(raw_file_name) if File.exists?(raw_file_name)
     `open "#{incident_list_url}"`
-    until `ls ~/Downloads`.include?("incidents.csv") do
+    until File.exists?(raw_file_name) do
       puts "waiting"
       sleep(1)
     end
