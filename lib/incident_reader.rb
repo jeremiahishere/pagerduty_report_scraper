@@ -9,6 +9,8 @@ class IncidentReader
 
     @end_at = CGI.escape(Time.now.strftime("%FT%T"))
     @start_at = CGI.escape((Time.now.to_date - lookback_window).strftime("%FT%T"))
+
+    @time_zone = CGI.escape(Time.now.strftime("%Z"))
   end
 
   def run
@@ -67,21 +69,30 @@ class IncidentReader
 
   # you are required to be logged in to pagerduty on your default browser before running this step
   def download_incident_list(file_name)
-    FileUtils.rm(file_name) if File.exists?(file_name)
-
     raw_file_name = File.expand_path("~/Downloads/incidents.csv")
-    FileUtils.rm(raw_file_name) if File.exists?(raw_file_name)
+    if File.exists?(raw_file_name)
+      puts "Deleted old Downloads file #{raw_file_name}"
+      FileUtils.rm(raw_file_name)
+    end
+  
+    puts "Request report from #{incident_list_url}"
     `open "#{incident_list_url}"`
     until File.exists?(raw_file_name) do
-      puts "waiting"
+      puts "Waiting for file to download"
       sleep(1)
     end
+
+    if File.exists?(file_name)
+      puts "Deleted old incidents/raw file #{file_name}"
+      FileUtils.rm(file_name)
+    end
+
     `mv #{raw_file_name} #{file_name}`
     puts "#{raw_file_name} written to #{file_name}"
   end
 
   # note that this is hard coded to west coast time
   def incident_list_url
-    "#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=America%2FLos_Angeles"
+    "#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=#{@time_zone}"
   end
 end
