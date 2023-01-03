@@ -1,10 +1,12 @@
 require 'csv'
+require 'cgi'
 
 require_relative "./config.rb"
+require_relative "./incident_collection.rb"
 
 class IncidentReader
   # lookback_window, days to look back.  0 will look back to midnight today
-  def initialize(lookback_window = 2)
+  def initialize(lookback_window = 14)
     @config = Config.new
 
     @end_at = CGI.escape(Time.now.strftime("%FT%T"))
@@ -16,43 +18,17 @@ class IncidentReader
   def run
     input_file_name = File.join(File.dirname(__FILE__), "..", "incidents", "raw", "incidents_#{@start_at}_to_#{@end_at}.csv")
     download_incident_list(input_file_name)
-    contents = parse_input_file(input_file_name)
+    # contents = parse_input_file(input_file_name)
+
+    incidents = IncidentCollection.new(input_file_name, @config.service_names)
+    contents = incidents.to_s_by_type
+    # puts contents
 
     output_file_name = File.join(File.dirname(__FILE__), "..", "incidents", "formatted", "incidents_#{@start_at}_to_#{@end_at}.txt")
     save_output_file(contents, output_file_name)
     print_output_file(contents)
   end
 
-  def parse_input_file(file_name)
-    csv = CSV.new(File.read(file_name), headers: true)
-    csv_rows = []
-    csv.each do |r|
-      csv_rows << r.to_h
-    end
-
-    # sort in order of longest resolution time, descending
-    csv_rows.sort! { |a, b| b["seconds_to_resolve"].to_i <=> a["seconds_to_resolve"].to_i }
-
-    important_services = @config.service_names
-
-    contents = []
-
-    csv_rows.each do |row|
-      if important_services.include?(row["service_name"])
-        contents << "====================================================================================="
-        contents << row["description"]
-        contents << row["service_name"]
-        contents << "Triggered at: #{row["created_on"]}"
-        resolution_time = Time.at(row["seconds_to_resolve"].to_i).utc.strftime("%H:%M:%S")
-        contents << "Time to resolve: #{resolution_time}"
-        contents << "#{@config.host}/incidents/#{row["id"]}"
-      end
-    end
-
-    contents
-  end
-
-  # todo: convert to html
   def save_output_file(contents, file_name)
     File.open(file_name, 'w') do |file|
       contents.each do |row|
@@ -93,6 +69,6 @@ class IncidentReader
 
   # note that this is hard coded to west coast time
   def incident_list_url
-    "#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=#{@time_zone}"
+    "https://#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=#{@time_zone}"
   end
 end
