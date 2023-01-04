@@ -6,7 +6,7 @@ require_relative "./incident_collection.rb"
 
 class IncidentReader
   # lookback_window, days to look back.  0 will look back to midnight today
-  def initialize(lookback_window = 14)
+  def initialize(lookback_window = 7)
     @config = Config.new
 
     @end_at = CGI.escape(Time.now.strftime("%FT%T"))
@@ -18,11 +18,10 @@ class IncidentReader
   def run
     input_file_name = File.join(File.dirname(__FILE__), "..", "incidents", "raw", "incidents_#{@start_at}_to_#{@end_at}.csv")
     download_incident_list(input_file_name)
-    # contents = parse_input_file(input_file_name)
 
-    incidents = IncidentCollection.new(input_file_name, @config.service_names)
+    incidents = IncidentCollection.new(input_file_name, @config.service_names, @config.host)
     contents = incidents.to_s_by_type
-    # puts contents
+    puts contents
 
     output_file_name = File.join(File.dirname(__FILE__), "..", "incidents", "formatted", "incidents_#{@start_at}_to_#{@end_at}.txt")
     save_output_file(contents, output_file_name)

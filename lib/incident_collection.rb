@@ -1,9 +1,10 @@
 class IncidentCollection
   include Enumerable
 
-  def initialize(file_name, important_services)
+  def initialize(file_name, important_services, host)
     @file_name = file_name
     @important_services = important_services
+    @host = host
     @incidents = []
 
     parse
@@ -13,7 +14,7 @@ class IncidentCollection
     csv = CSV.new(File.read(@file_name), headers: true)
     csv_rows = []
     csv.each do |r|
-      @incidents << Incident.new(r)
+      @incidents << Incident.new(r, @host)
     end
   end
 
@@ -39,8 +40,11 @@ Incidents: #{incidents.count}
 Service Name: #{incidents.collect(&:service_name).uniq}
 Average resolution time: #{resolution_time}
 ---------------------------------------------------------------------
+First 10 incidents:
+#{incidents.slice(0, 10).collect { |i| "* #{i.url}" }.join("\n")}
+---------------------------------------------------------------------
 Sample incident:
-#{incidents.first.to_s}
+#{incidents.last.to_s}
 ---------------------------------------------------------------------"
     end
 
@@ -53,7 +57,7 @@ Sample incident:
 end
 
 class Incident
-  def initialize(params)
+  def initialize(params, host)
     params.each_pair do |key, value|
       define_singleton_method(key.to_sym) do
         value
@@ -61,10 +65,15 @@ class Incident
     end
 
     @incident_type = IncidentType.find(description)
+    @host = host
   end
 
   def incident_type
     @incident_type
+  end
+
+  def url
+    "https://#{@host}/incidents/#{id}"
   end
 
   def to_s
@@ -74,7 +83,7 @@ class Incident
     contents << "Triggered at: #{created_on}"
     resolution_time = Time.at(seconds_to_resolve.to_i).utc.strftime("%H:%M:%S")
     contents << "Time to resolve: #{resolution_time}"
-    # contents << "#{@config.host}/incidents/#{row["id"]}"
+    contents << "Link: #{url}"
 
     return contents.join("\n")
   end
@@ -103,7 +112,7 @@ class IncidentType
     # look at the best match
     best_type, best_score = scores.sort_by {|k, v| -v }.first
 
-    if best_score > 0.9
+    if best_score > fuzzy_match_threshold
       # if it is above the threshold, return that type
       return best_type
     else
@@ -112,6 +121,18 @@ class IncidentType
       @types << new_type
       return new_type
     end
+  end
+  
+  def self.fuzzy_match_threshold
+    # separate types per node internal ip
+    0.99
+
+    # some alerts are grouped ignoring internal ip/db name but some are separate
+    # this threshold isn't really useful
+    # 0.95
+
+    # grouped types per alert, ignoring internal ip or database name
+    # 0.9
   end
 
   def self.types
