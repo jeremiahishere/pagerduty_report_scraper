@@ -1,3 +1,5 @@
 incidents/*
 config.yml
 .DS_Store
+*.sqlite3
+
