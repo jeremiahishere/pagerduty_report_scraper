@@ -3,8 +3,8 @@ module PagerdutyReportScraper
     belongs_to :scrape
 
     scope :by_service_name, lambda { |name| where(service_name: name) }
-    scope :urgent, labmda { where(urgency: "high")
-    scope :not_urgent, labmda { where(urgency: "low")
+    scope :urgent, lambda { where(urgency: "high") }
+    scope :not_urgent, lambda { where(urgency: "low") }
 
     def to_s
       attributes.inspect

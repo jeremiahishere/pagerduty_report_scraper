@@ -1,6 +1,6 @@
 require_relative "./lib/pagerduty_report_scraper"
 
-task :scrap do
+task :scrape do
   PagerdutyReportScraper.scrape
 end
 
