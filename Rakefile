@@ -1,8 +1,11 @@
 require_relative "./lib/pagerduty_report_scraper"
 
-task :run do
-  # IncidentReader.new.run
+task :scrap do
   PagerdutyReportScraper.scrape
+end
+
+task :generate_reports do
+  PagerdutyReportScraper.generate_reports
 end
 
 task :shell do

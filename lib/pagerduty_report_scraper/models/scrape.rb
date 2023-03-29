@@ -2,6 +2,10 @@ module PagerdutyReportScraper
   class Scrape < ActiveRecord::Base
     has_many :incidents
 
+    def services
+      incidents.select(:service_name).distinct
+    end
+
     def start_at
       end_at.to_date - lookback_window
     end

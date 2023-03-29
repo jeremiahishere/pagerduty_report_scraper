@@ -1,0 +1,4 @@
+<p><%= description %></p>
+<p>Triggered at: <%= created_on %></p>
+<p>Time to resolve: <%= Time.at(seconds_to_resolve.to_i).utc.strftime("%H:%M:%S") %></p>
+<p>Url: <%= "https://#{PagerdutyReportScraper.config.host}/incidents/#{id}" %></p>

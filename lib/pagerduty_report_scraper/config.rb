@@ -11,8 +11,9 @@ module PagerdutyReportScraper
       @config["host"]
     end
 
-    def service_names
-      @config["service_names"]
+    # number of days to look back
+    def lookback_window
+      @config["lookback_window"].to_i
     end
   end
 end

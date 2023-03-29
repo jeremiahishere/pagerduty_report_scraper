@@ -7,7 +7,7 @@ require_relative "./incident_collection.rb"
 module PagerdutyReportScraper
   class IncidentScraper
     # lookback_window, days to look back.  0 will look back to midnight today
-    def initialize(lookback_window = 7)
+    def initialize(lookback_window)
       @scrape = Scrape.new(
         lookback_window: lookback_window,
         end_at: Time.now
@@ -70,9 +70,10 @@ module PagerdutyReportScraper
     def incident_list_url
       end_at = CGI.escape(@scrape.end_at.strftime("%FT%T"))
       start_at = CGI.escape(@scrape.start_at.strftime("%FT%T"))
-      time_zone = CGI.escape(@scrape.end_at.strftime("%Z"))
+      # the pagerduty api doesn't like the edt time zone
+      # time_zone = CGI.escape(@scrape.end_at.strftime("%Z"))
 
-      "https://#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{start_at}&until=#{end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=#{time_zone}"
+      "https://#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{start_at}&until=#{end_at}&filters[urgency]=high%2Clow&rollup=daily" # &time_zone=#{time_zone}"
     end
   end
 end
