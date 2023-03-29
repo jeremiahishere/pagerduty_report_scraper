@@ -13,4 +13,19 @@ class Config
   def service_names
     @config["service_names"]
   end
+
+  # lookback_window, days to look back.  0 will look back to midnight today
+  def lookback_window
+    @config["lookback_window"].to_i
+  end
+  
+  # Potential values:
+  #
+  # 0.99: separate types per node internal ip
+  # 0.95: some alerts are grouped ignoring internal ip/db name but some are separate
+  #       this threshold isn't really useful
+  # 0.90: grouped types per alert, ignoring internal ip or database name
+  def fuzzy_match_threshold
+    @config["fuzzy_match_threshold"].to_f
+  end
 end

@@ -1,10 +1,10 @@
 class IncidentCollection
   include Enumerable
 
-  def initialize(file_name, important_services, host)
+  def initialize(file_name)
     @file_name = file_name
-    @important_services = important_services
-    @host = host
+    @important_services = ReportScraper.config.service_names
+    @host = ReportScraper.config.host
     @incidents = []
 
     parse
@@ -14,27 +14,32 @@ class IncidentCollection
     csv = CSV.new(File.read(@file_name), headers: true)
     csv_rows = []
     csv.each do |r|
-      @incidents << Incident.new(r, @host)
+      if @important_services.include?(r["service_name"])
+        @incidents << Incident.new(r, @host) 
+      end
     end
+
+    puts "There are #{@incidents.size} incidents to look at"
   end
 
   def each
     @incidents.each do |i|
-      if @important_services.include?(i.service_name)
-        yield(i)
-      end
+      yield(i)
     end
   end
 
   def to_s_by_type
-    output = {}
-    IncidentType.types.each do |type|
+    output = []
+    IncidentType.types. each do |type|
       incidents = select { |i| i.incident_type == type }
       next if incidents.empty? # all incidents in other services
 
       resolution_seconds = incidents.collect { |i| i.seconds_to_resolve.to_i }.sum / incidents.count 
       resolution_time = Time.at(resolution_seconds).utc.strftime("%H:%M:%S")
-      output[incidents.count] = "=====================================================================================
+
+      output << {
+        incident_count: incidents.count,
+        summary: "=====================================================================================
 Description: #{type.name.strip}
 Incidents: #{incidents.count}
 Service Name: #{incidents.collect(&:service_name).uniq}
@@ -46,9 +51,10 @@ First 10 incidents:
 Sample incident:
 #{incidents.last.to_s}
 ---------------------------------------------------------------------"
+      }
     end
 
-    output.keys.sort.reverse.collect { |k| output[k] }.compact
+    output.sort_by { |o| o[:incident_count] }.reverse.collect { |o| o[:summary] }.compact
   end
 
   def incidents
@@ -97,6 +103,7 @@ class IncidentType
     if @types.empty?
       new_type = new(name)
       @types << new_type
+      print "|"
       return new_type
     end
 
@@ -104,35 +111,21 @@ class IncidentType
 
     jarow = FuzzyStringMatch::JaroWinkler.create(:pure)
 
-    # for each type
+    # return the first good type
     @types.each do |type|
-      # fuzzy string match against the type
-      scores[type] = jarow.getDistance(name, type.name)
+      score = jarow.getDistance(name, type.name)
+      if score > ReportScraper.config.fuzzy_match_threshold
+        type.add
+        print "."
+        return type 
+      end
     end
-    # look at the best match
-    best_type, best_score = scores.sort_by {|k, v| -v }.first
 
-    if best_score > fuzzy_match_threshold
-      # if it is above the threshold, return that type
-      return best_type
-    else
-      # if it is below the threshold, make a new type
-      new_type = new(name)
-      @types << new_type
-      return new_type
-    end
-  end
-  
-  def self.fuzzy_match_threshold
-    # separate types per node internal ip
-    0.99
-
-    # some alerts are grouped ignoring internal ip/db name but some are separate
-    # this threshold isn't really useful
-    # 0.95
-
-    # grouped types per alert, ignoring internal ip or database name
-    # 0.9
+    # if it is below the threshold, make a new type
+    new_type = new(name)
+    @types << new_type
+    print "|"
+    return new_type
   end
 
   def self.types
@@ -141,9 +134,18 @@ class IncidentType
 
   def initialize(name)
     @name = name
+    @incidents = 1
   end
 
   def name
     @name
+  end
+
+  def add
+    @incidents += 1
+  end
+
+  def incident_count
+    @incidents
   end
 end

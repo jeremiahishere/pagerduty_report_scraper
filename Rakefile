@@ -1,5 +1,5 @@
-require_relative "./lib/incident_reader"
+require_relative "./lib/report_scraper"
 
 task :run do
-  IncidentReader.new.run
+  ReportScraper.scrape
 end
