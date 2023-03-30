@@ -30,9 +30,8 @@ class IncidentCollection
 
   def to_s_by_type
     output = []
-    IncidentType.types. each do |type|
+    IncidentType.types.each do |type|
       incidents = select { |i| i.incident_type == type }
-      next if incidents.empty? # all incidents in other services
 
       resolution_seconds = incidents.collect { |i| i.seconds_to_resolve.to_i }.sum / incidents.count 
       resolution_time = Time.at(resolution_seconds).utc.strftime("%H:%M:%S")
