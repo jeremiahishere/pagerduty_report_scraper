@@ -67,6 +67,11 @@ class IncidentReader
   def incident_list_url
     # pagerduty does not like the edt time zone
     #     &time_zone=#{@time_zone}"
+
+    # I am not clear what setting the urgency filter to "high,low" does but when I take it out, it
+    # removed 75% of the incidents.  Keeping it in for now but a candidate to actually figure out
+    # what is going on.
+    
     "https://#{ReportScraper.config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily"
   end
 end

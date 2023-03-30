@@ -19,6 +19,7 @@ config:
   lookback_window: 30
 
   # Group incidents by looking at similar names.
+  # 1.00 allows exact matches only
   # 0.99 will separate incidents by ip address
   # 0.97 something in between
   # 0.90 will group similarly named incidents that only differ by ip address and application name

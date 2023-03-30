@@ -21,6 +21,7 @@ class Config
   
   # Potential values:
   #
+  # 1.00: exact match only
   # 0.99: separate types per node internal ip
   # 0.95: some alerts are grouped ignoring internal ip/db name but some are separate
   #       this threshold isn't really useful

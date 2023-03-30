@@ -18,8 +18,6 @@ class IncidentCollection
         @incidents << Incident.new(r, @host) 
       end
     end
-
-    puts "There are #{@incidents.size} incidents to look at"
   end
 
   def each
@@ -53,7 +51,15 @@ Sample incident:
       }
     end
 
-    output.sort_by { |o| o[:incident_count] }.reverse.collect { |o| o[:summary] }.compact
+    stats = "
+=====================================================================================
+---------------------------------------------------------------------
+Total incidents: #{incidents.count}
+Unique incident types: #{IncidentType.types.count}
+---------------------------------------------------------------------
+====================================================================================="
+
+    output.sort_by { |o| o[:incident_count] }.reverse.collect { |o| o[:summary] }.compact.unshift(stats)
   end
 
   def incidents
