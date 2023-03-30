@@ -1,13 +1,10 @@
 require 'csv'
 require 'cgi'
 
-require_relative "./config.rb"
-require_relative "./incident_collection.rb"
 
 class IncidentReader
-  # lookback_window, days to look back.  0 will look back to midnight today
-  def initialize(lookback_window = 7)
-    @config = Config.new
+  def initialize()
+    lookback_window = ReportScraper.config.lookback_window
 
     @end_at = CGI.escape(Time.now.strftime("%FT%T"))
     @start_at = CGI.escape((Time.now.to_date - lookback_window).strftime("%FT%T"))
@@ -19,7 +16,7 @@ class IncidentReader
     input_file_name = File.join(File.dirname(__FILE__), "..", "incidents", "raw", "incidents_#{@start_at}_to_#{@end_at}.csv")
     download_incident_list(input_file_name)
 
-    incidents = IncidentCollection.new(input_file_name, @config.service_names, @config.host)
+    incidents = IncidentCollection.new(input_file_name)
     contents = incidents.to_s_by_type
     puts contents
 
@@ -68,6 +65,13 @@ class IncidentReader
 
   # note that this is hard coded to west coast time
   def incident_list_url
-    "https://#{@config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily&time_zone=#{@time_zone}"
+    # pagerduty does not like the edt time zone
+    #     &time_zone=#{@time_zone}"
+
+    # I am not clear what setting the urgency filter to "high,low" does but when I take it out, it
+    # removed 75% of the incidents.  Keeping it in for now but a candidate to actually figure out
+    # what is going on.
+    
+    "https://#{ReportScraper.config.host}/api/v1/reports/raw/incidents.csv?since=#{@start_at}&until=#{@end_at}&filters[urgency]=high%2Clow&rollup=daily"
   end
 end
